@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_project_user,access_project_project_user,project.model_project_project,project.group_project_user,1,1,1,0
+access_project_task_user,access_project_task_user,project.model_project_task,project.group_project_user,1,1,1,0
+access_project_task_type_user,access_project_task_type_user,project.model_project_task_type,project.group_project_user,1,0,0,0
+access_project_tags_user,access_project_tags_user,project.model_project_tags,project.group_project_user,1,1,1,0
+access_mail_message_user,access_mail_message_user,mail.model_mail_message,base.group_user,1,1,1,0
+access_mail_followers_user,access_mail_followers_user,mail.model_mail_followers,base.group_user,1,1,1,1

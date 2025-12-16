@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://api.taskboard.example/schemas/board.json",
+  "title": "Board",
+  "description": "Kanban board backed by Odoo project.project",
+  "type": "object",
+  "required": [
+    "board_id",
+    "name",
+    "owner",
+    "visibility",
+    "members",
+    "stages",
+    "tags",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "board_id": {
+      "type": "string",
+      "description": "Odoo project.project.id",
+      "pattern": "^project:[0-9]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Board name",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "owner": {
+      "$ref": "#/definitions/Partner"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": ["private", "team", "public"]
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/BoardMember"
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Stage"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Tag"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "definitions": {
+    "Partner": {
+      "type": "object",
+      "required": ["partner_id", "email", "name"],
+      "properties": {
+        "partner_id": {
+          "type": "integer",
+          "description": "Odoo res.partner.id"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "name": {
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "BoardMember": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Partner"
+        },
+        {
+          "type": "object",
+          "required": ["role"],
+          "properties": {
+            "role": {
+              "type": "string",
+              "enum": ["admin", "manager", "contributor", "viewer"]
+            }
+          }
+        }
+      ]
+    },
+    "Stage": {
+      "type": "object",
+      "required": ["stage_id", "name", "order"],
+      "properties": {
+        "stage_id": {
+          "type": "string",
+          "pattern": "^stage:[0-9]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "wip_limit": {
+          "type": ["integer", "null"]
+        },
+        "fold": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Tag": {
+      "type": "object",
+      "required": ["tag_id", "name"],
+      "properties": {
+        "tag_id": {
+          "type": "string",
+          "pattern": "^tag:[0-9]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        }
+      }
+    }
+  }
+}

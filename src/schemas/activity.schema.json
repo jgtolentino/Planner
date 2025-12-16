@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://api.taskboard.example/schemas/activity.json",
+  "title": "Activity",
+  "description": "Activity/comment backed by Odoo mail.message",
+  "type": "object",
+  "required": ["event_id", "type", "author", "created_at"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Odoo mail.message.id",
+      "pattern": "^msg:[0-9]+$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["comment", "stage_change", "field_update", "assignment", "mention"]
+    },
+    "author": {
+      "$ref": "#/definitions/Partner"
+    },
+    "body_md": {
+      "type": "string",
+      "description": "Markdown body for comments"
+    },
+    "mentions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Mention"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "field_name": {
+          "type": "string"
+        },
+        "old_value": {
+          "type": "string"
+        },
+        "new_value": {
+          "type": "string"
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "definitions": {
+    "Partner": {
+      "type": "object",
+      "required": ["partner_id", "email", "name"],
+      "properties": {
+        "partner_id": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "name": {
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "Mention": {
+      "type": "object",
+      "required": ["email", "partner_id"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "partner_id": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

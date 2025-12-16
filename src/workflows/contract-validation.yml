@@ -1,0 +1,154 @@
+name: Contract Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate-static:
+    name: Static Contract Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run static contract validation
+        run: |
+          chmod +x ci/validate-contract.sh
+          ./ci/validate-contract.sh
+
+  validate-live:
+    name: Live API Validation (Docker)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install validation tools
+        run: |
+          npm install -g ajv-cli
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+      
+      - name: Start Odoo stack
+        run: |
+          docker-compose -f infra/odoo-dev/docker-compose.yml up -d
+          echo "Waiting for services to be healthy..."
+          sleep 30
+          docker-compose -f infra/odoo-dev/docker-compose.yml ps
+      
+      - name: Install module
+        run: |
+          chmod +x infra/odoo-dev/install-module.sh
+          ./infra/odoo-dev/install-module.sh
+      
+      - name: Seed test data
+        run: |
+          chmod +x infra/odoo-dev/seed.sh
+          ./infra/odoo-dev/seed.sh
+      
+      - name: Run live API validation
+        env:
+          ODOO_DB: odoo
+          ODOO_LOGIN: admin
+          ODOO_PASSWORD: admin
+        run: |
+          chmod +x ci/validate-live-api.sh
+          ./ci/validate-live-api.sh http://localhost:8069
+      
+      - name: Check contract drift
+        env:
+          ODOO_DB: odoo
+          ODOO_LOGIN: admin
+          ODOO_PASSWORD: admin
+        run: |
+          chmod +x ci/check-contract-drift.sh
+          ./ci/check-contract-drift.sh http://localhost:8069
+      
+      - name: Test idempotency (run again)
+        env:
+          ODOO_DB: odoo
+          ODOO_LOGIN: admin
+          ODOO_PASSWORD: admin
+        run: |
+          echo "Testing idempotency by running install + seed + test again..."
+          chmod +x infra/odoo-dev/install-module.sh infra/odoo-dev/seed.sh infra/odoo-dev/wait-odoo.sh
+          ./infra/odoo-dev/install-module.sh
+          ./infra/odoo-dev/seed.sh
+          ./ci/validate-live-api.sh http://localhost:8069
+          echo "✓ Idempotency verified"
+      
+      - name: Audit sudo usage
+        run: |
+          echo "Checking sudo() usage..."
+          SUDO_COUNT=$(grep -r "sudo()" odoo-module/ipai_taskboard_api --include="*.py" | grep -v "# " | wc -l)
+          echo "Found $SUDO_COUNT uses of sudo()"
+          
+          # Should only be 2 (both in mentions.py)
+          if [ "$SUDO_COUNT" -ne 2 ]; then
+            echo "❌ Expected exactly 2 sudo() calls, found $SUDO_COUNT"
+            grep -rn "sudo()" odoo-module/ipai_taskboard_api --include="*.py" | grep -v "# "
+            exit 1
+          fi
+          
+          echo "✓ sudo() usage is acceptable"
+      
+      - name: Show Odoo logs on failure
+        if: failure()
+        run: |
+          docker-compose -f infra/odoo-dev/docker-compose.yml logs odoo
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f infra/odoo-dev/docker-compose.yml down -v
+
+  security-check:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+      
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD

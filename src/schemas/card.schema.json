@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://api.taskboard.example/schemas/card.json",
+  "title": "Card",
+  "description": "Task card backed by Odoo project.task",
+  "type": "object",
+  "required": [
+    "card_id",
+    "board_id",
+    "stage_id",
+    "title",
+    "priority",
+    "created_at",
+    "updated_at",
+    "owners",
+    "watchers",
+    "tags",
+    "subtask_ids"
+  ],
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "Odoo project.task.id",
+      "pattern": "^task:[0-9]+$"
+    },
+    "board_id": {
+      "type": "string",
+      "pattern": "^project:[0-9]+$"
+    },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^stage:[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "description_md": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["0", "1", "2", "3"],
+      "description": "0=low, 1=normal, 2=high, 3=urgent"
+    },
+    "due_date": {
+      "type": ["string", "null"],
+      "format": "date"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "owners": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Partner"
+      },
+      "description": "CE: single user_id, OCA: multiple assignees"
+    },
+    "watchers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Partner"
+      },
+      "description": "mail.followers"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^tag:[0-9]+$"
+      }
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "pattern": "^task:[0-9]+$"
+    },
+    "subtask_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^task:[0-9]+$"
+      }
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ChecklistItem"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TaskDependency"
+      }
+    },
+    "sequence": {
+      "type": "integer",
+      "description": "Display order within stage"
+    }
+  },
+  "definitions": {
+    "Partner": {
+      "type": "object",
+      "required": ["partner_id", "email", "name"],
+      "properties": {
+        "partner_id": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "name": {
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "ChecklistItem": {
+      "type": "object",
+      "required": ["id", "text", "done"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "done": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer"
+        }
+      }
+    },
+    "TaskDependency": {
+      "type": "object",
+      "required": ["type", "task_id"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["blocks", "blocked_by", "relates_to"]
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^task:[0-9]+$"
+        }
+      }
+    }
+  }
+}

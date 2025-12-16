@@ -1,0 +1,21 @@
+{
+  "name": "odoo-taskboard-api",
+  "version": "1.0.0",
+  "description": "Notion-style Kanban API on Odoo CE + OCA 18",
+  "private": true,
+  "scripts": {
+    "validate:contract": "./ci/validate-contract.sh",
+    "validate:live": "./ci/validate-live-api.sh",
+    "validate:drift": "./ci/check-contract-drift.sh",
+    "record:fixtures": "./ci/record-live-fixtures.sh"
+  },
+  "devDependencies": {
+    "ajv-cli": "^5.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
